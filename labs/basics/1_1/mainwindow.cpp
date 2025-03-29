@@ -108,6 +108,7 @@ void MainWindow::onSpinBoxValueChanged(int value) {
     listWidget->clear();
     ticketStatuses.clear();
     ticketNumbers.clear();
+    lastSeen.clear();
     totalCount = value;
     seenTickets = 0;
     greenTickets = 0;
@@ -126,6 +127,7 @@ void MainWindow::onSpinBoxValueChanged(int value) {
     nameEdit->clear();
     comboBox->setCurrentIndex(0);
 }
+
 
 void MainWindow::rename() {
     if (selectedItem) {
@@ -176,6 +178,7 @@ void MainWindow::questionView(QListWidgetItem* item) {
 
 
 void MainWindow::NextQuestion() {
+    if (greenTickets != 0) {
     int greenValue = greenTickets / totalCount;
     if (greenValue < 1) {
         int randomIndex = QRandomGenerator::global()->bounded(ticketNumbers.size());
@@ -191,6 +194,7 @@ void MainWindow::NextQuestion() {
     else {
         selectedItem = nullptr;
     }
+    }
 }
 
 void MainWindow::PreviousQuestion() {
@@ -198,15 +202,27 @@ void MainWindow::PreviousQuestion() {
         QListWidgetItem* prevTicket = lastSeen.pop();
         if (prevTicket) {
             listWidget->setCurrentItem(prevTicket);
-            questionView(prevTicket);
+            if (prevTicket && prevTicket != selectedItem) {
+                selectedItem = prevTicket;
+                nameLabel->setText("Имя билета: " + prevTicket->text());
+                nameEdit->setText(prevTicket->text());
+                int ticketNumber = ticketNumbers[prevTicket];
+                numberLabel->setText("Номер билета: " + QString::number(ticketNumber));
+                comboBox->setCurrentIndex(ticketStatuses[prevTicket]);
+            }
         }
     }
 }
 
-
 void MainWindow::trackProgress() {
+    if (totalCount > 0) {
         int total = 100 * seenTickets / totalCount;
         totalProgress->setValue(total);
         int green = 100 * greenTickets / totalCount;
         greenProgress->setValue(green);
+    } else {
+        totalProgress->setValue(0);
+        greenProgress->setValue(0);
+    }
 }
+
