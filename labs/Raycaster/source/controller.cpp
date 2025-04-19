@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <QtMath>
 
-#include "../include/controller.h"
+#include "../headers/controller.h"
 
 Controller::Controller()
 {

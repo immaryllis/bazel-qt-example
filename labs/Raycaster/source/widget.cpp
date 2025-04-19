@@ -32,8 +32,7 @@ void Widget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), QColor(50, 50, 50));
     drawLightArea(&painter);
-    drawPolygons(&painter);
-    drawStaticSource(&painter);
+    drawPolygons(&painter);\
     drawLightMarkers(&painter);
 }
 
@@ -70,6 +69,23 @@ void Widget::drawLightArea(QPainter* painter) {
             painter->drawPolygon(lightArea.getVertices().data(), static_cast<int>(lightArea.getVertices().size()));
         }
     }
+        const std::vector<QPointF> static_sources = controller_.getStaticSources();
+        for (const auto& static_source : static_sources) {
+            QPointF point = controller_.getLightSource();
+            controller_.setLightSource(static_source);
+            const auto rays = controller_.castRays(static_source);
+            const Polygon lightArea = controller_.createLightArea();
+            const auto& vertices = lightArea.getVertices();
+            if (!vertices.empty()) {
+                QRadialGradient gradient(static_source, 200, static_source);
+                gradient.setColorAt(0, QColor(255, 255, 200, 75));
+                gradient.setColorAt(1, QColor(255, 255, 200, 0));
+                painter->setPen(Qt::NoPen);
+                painter->setBrush(gradient);
+                painter->drawPolygon(lightArea.getVertices().data(), static_cast<int>(lightArea.getVertices().size()));
+            }
+            controller_.setLightSource(point);
+        }
     }
 }
 
@@ -82,28 +98,6 @@ void Widget::drawPolygons(QPainter* painter) {
             painter->drawPolygon(vertices.data(), static_cast<int>(vertices.size()));
         }
     }
-}
-
-void Widget::drawStaticSource(QPainter* painter) {
-    painter->save();
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setPen(Qt::NoPen);
-    const std::vector<QPointF> static_sources = controller_.getStaticSources();
-    for (const auto& static_source : static_sources) {
-        auto rays = controller_.castRays(static_source);
-        controller_.intersectRays(&rays);
-        const Polygon lightArea = controller_.createLightArea(rays);
-        const auto& vertices = lightArea.getVertices();
-        if (!vertices.empty()) {
-            QRadialGradient gradient(static_source, 200, static_source);
-            gradient.setColorAt(0, QColor(255, 255, 200, 75));
-            gradient.setColorAt(1, QColor(255, 255, 200, 0));
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(gradient);
-            painter->drawPolygon(vertices.data(), static_cast<int>(vertices.size()));
-        }
-    }
-    painter->restore();
 }
 
 void Widget::mousePressEvent(QMouseEvent* event) {
