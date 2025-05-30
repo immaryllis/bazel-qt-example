@@ -1,11 +1,13 @@
 ﻿load("@rules_qt//qt:defs.bzl", "qt_cc_binary", "qt_cc_library")
 
 qt_cc_library(
-    name = "mainwindow_lib",
+    name = "mainwindow",
     srcs = ["mainwindow.cpp"],
     hdrs = ["mainwindow.h"],
     moc_srcs = ["mainwindow.h"],
     deps = [
+        "@qt//:QtCore",
+        "@qt//:QtGui",
         "@qt//:QtWidgets",
     ],
 )
@@ -14,7 +16,9 @@ qt_cc_binary(
     name = "linguine",
     srcs = ["main.cpp"],
     deps = [
-        ":mainwindow_lib",
+        ":mainwindow",
+        "@qt//:QtCore",
+        "@qt//:QtGui",
         "@qt//:QtWidgets",
     ],
 )
