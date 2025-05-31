@@ -19,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     globalTimer = new QTimer(this);
     connect(globalTimer, &QTimer::timeout, this, &MainWindow::updateTimer);
-    globalTimer->start(1000);
 
     taskTimer = new QTimer(this);
     connect(taskTimer, &QTimer::timeout, this, [=]() {
@@ -33,7 +32,6 @@ MainWindow::MainWindow(QWidget *parent)
             QApplication::quit();
         }
     });
-    taskTimer->start(1000);
 }
 
 MainWindow::~MainWindow()
@@ -129,8 +127,8 @@ void MainWindow::setupMainLayout()
     QHBoxLayout *navLayout = new QHBoxLayout();
     QPushButton *translationBtn = new QPushButton("Перевод", this);
     QPushButton *grammarBtn = new QPushButton("Грамматика", this);
-    connect(translationBtn, &QPushButton::clicked, this, &MainWindow::showTranslationExercise);
-    connect(grammarBtn, &QPushButton::clicked, this, &MainWindow::showGrammarExercise);
+    connect(translationBtn, &QPushButton::clicked, this, &MainWindow::showUpdateTranslation);
+    connect(grammarBtn, &QPushButton::clicked, this, &MainWindow::showUpdateGrammar);
     navLayout->addWidget(translationBtn);
     navLayout->addWidget(grammarBtn);
 
@@ -194,6 +192,11 @@ QWidget* MainWindow::createGrammarPage()
 {
     QWidget *page = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(page);
+
+    QButtonGroup *oldGroup = findChild<QButtonGroup*>("grammarOptions");
+    if (oldGroup) {
+        delete oldGroup;
+    }
 
     QString question = getNextQuestion("grammar");
     QLabel *questionLabel = new QLabel(question, this);
@@ -335,14 +338,6 @@ QString MainWindow::getHint(const QString &type)
 
 void MainWindow::showTranslationExercise()
 {
-    if (stackedWidget->currentIndex() != 0 || stackedWidget->count() > 1) {
-        currentTask = 0;
-        score = 0;
-        wrongAttempts = 0;
-        elapsedTaskTime = 0;
-        progressBar->setValue(0);
-        scoreLabel->setText("Оценка: 0/" + QString::number(totalTasks));
-    }
     while (stackedWidget->count() > 0) {
         QWidget *widget = stackedWidget->widget(0);
         stackedWidget->removeWidget(widget);
@@ -350,19 +345,42 @@ void MainWindow::showTranslationExercise()
     }
     stackedWidget->addWidget(createTranslationPage());
     stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::showUpdateTranslation() {
+    currentTask = 0;
+    score = 0;
     wrongAttempts = 0;
+    elapsedTaskTime = 0;
+    timerLabel->setText(QString("Время: %1:%2")
+                                    .arg(elapsedTaskTime / 60, 2, 10, QChar('0'))
+                                    .arg(elapsedTaskTime % 60, 2, 10, QChar('0')));
+    progressBar->setValue(0);
+    scoreLabel->setText("Оценка: 0/" + QString::number(totalTasks));
+
+    taskTimer->stop();
+    taskTimer->start(1000);
+    showTranslationExercise();
+}
+
+void MainWindow::showUpdateGrammar() {
+    currentTask = 0;
+    score = 0;
+    wrongAttempts = 0;
+    elapsedTaskTime = 0;
+    timerLabel->setText(QString("Время: %1:%2")
+                                    .arg(elapsedTaskTime / 60, 2, 10, QChar('0'))
+                                    .arg(elapsedTaskTime % 60, 2, 10, QChar('0')));
+    progressBar->setValue(0);
+    scoreLabel->setText("Оценка: 0/" + QString::number(totalTasks));
+
+    taskTimer->stop();
+    taskTimer->start(1000);
+    showGrammarExercise();
 }
 
 void MainWindow::showGrammarExercise()
 {
-    if (stackedWidget->currentIndex() != 0 || stackedWidget->count() > 1) {
-        currentTask = 0;
-        score = 0;
-        wrongAttempts = 0;
-        elapsedTaskTime = 0;
-        progressBar->setValue(0);
-        scoreLabel->setText("Оценка: 0/" + QString::number(totalTasks));
-    }
     while (stackedWidget->count() > 0) {
         QWidget *widget = stackedWidget->widget(0);
         stackedWidget->removeWidget(widget);
@@ -370,7 +388,6 @@ void MainWindow::showGrammarExercise()
     }
     stackedWidget->addWidget(createGrammarPage());
     stackedWidget->setCurrentIndex(0);
-    wrongAttempts = 0;
 }
 
 void MainWindow::checkTranslationAnswer()
@@ -382,7 +399,8 @@ void MainWindow::checkTranslationAnswer()
     if (userAnswer == correctAnswer) {
         score++;
         currentTask++;
-        wrongAttempts = 0;
+        progressBar->setValue(currentTask);
+        scoreLabel->setText("Оценка: " + QString::number(score) + "/" + QString::number(totalTasks));
         QMessageBox::information(this, "Результат", "Правильно!");
         showTranslationExercise();
     } else {
@@ -420,7 +438,8 @@ void MainWindow::checkGrammarAnswer()
     if (isCorrect) {
         score++;
         currentTask++;
-        wrongAttempts = 0;
+        progressBar->setValue(currentTask);
+        scoreLabel->setText("Оценка: " + QString::number(score) + "/" + QString::number(totalTasks));
         QMessageBox::information(this, "Результат", "Правильно!");
         showGrammarExercise();
     } else {
@@ -543,9 +562,9 @@ void MainWindow::resetTask()
     if (stackedWidget->currentIndex() == 0 && stackedWidget->count() > 0) {
         QWidget *currentWidget = stackedWidget->widget(0);
         if (dynamic_cast<QTextEdit*>(currentWidget->findChild<QTextEdit*>("translationInput"))) {
-            showTranslationExercise();
+            showUpdateTranslation();
         } else {
-            showGrammarExercise();
+            showUpdateGrammar();
         }
     }
 }

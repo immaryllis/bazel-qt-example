@@ -70,6 +70,8 @@ class MainWindow : public QMainWindow
     void showDifficultyDialog();
     void setDifficulty(int index);
     void resetTask();
+    void showUpdateTranslation();
+    void showUpdateGrammar();
 
    private slots:
     void onTimerTimeout();

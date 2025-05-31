@@ -1,4 +1,4 @@
-﻿load("@rules_qt//:qt.bzl", "qt_cc_binary", "qt_cc_library")
+load("@rules_qt//:qt.bzl", "qt_cc_binary", "qt_cc_library")
 
 qt_cc_library(
     name = "lib",
@@ -11,9 +11,8 @@ qt_cc_library(
         "@rules_qt//:qt_gui",
         "@rules_qt//:qt_widgets",
         "@rules_qt//:qt_sql",
-
     ],
-        linkopts = ["-Wl,--allow-multiple-definition"],
+    linkopts = ["-Wl,--allow-multiple-definition"],
 )
 
 qt_cc_binary(
